@@ -1,0 +1,20 @@
+[project]
+name = "contacts-app"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Artem",email = "a.sopizhenko@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "asyncpg (>=0.30.0,<0.31.0)",
+    "sqlalchemy (>=2.0.40,<3.0.0)",
+    "alembic (>=1.15.2,<2.0.0)",
+    "fastapi[standard] (>=0.115.12,<0.116.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

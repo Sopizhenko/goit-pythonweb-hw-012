@@ -1,0 +1,53 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Poetry-specific
+poetry.lock
+.cache/
+.python-version
+
+# Virtual environments (if not using Poetry’s in-project venv)
+.env
+.venv/
+venv/
+ENV/
+env/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+.cache
+nosetests.xml
+test-results/
+.pytest_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# IDEs / Editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Mac / Windows files
+.DS_Store
+Thumbs.db
