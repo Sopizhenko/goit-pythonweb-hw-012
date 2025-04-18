@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.database.models import Contact
+from src.database.models import Contact, User
 from src.schemas import (
     ContactCreate,
     ContactUpdate,
@@ -19,13 +19,14 @@ class ContactRepository:
 
     async def get_contacts(
         self,
+        user: User,
         first_name: str = None,
         last_name: str = None,
         email: str = None,
         skip: int = 0,
         limit: int = 100,
     ) -> List[ContactModel]:
-        stmt = select(Contact)
+        stmt = select(Contact).where(Contact.user_id == user.id)
         if first_name:
             stmt = stmt.where(Contact.first_name.ilike(f"%{first_name}%"))
         if last_name:
@@ -36,22 +37,29 @@ class ContactRepository:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def get_contact_by_id(self, contact_id: int) -> ContactModel | None:
-        stmt = select(Contact).where(Contact.id == contact_id)
+    async def get_contact_by_id(
+        self, contact_id: int, user: User
+    ) -> ContactModel | None:
+        stmt = select(Contact).where(
+            Contact.id == contact_id, Contact.user_id == user.id
+        )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def create_contact(self, contact: ContactCreate) -> ContactModel:
+    async def create_contact(self, contact: ContactCreate, user: User) -> ContactModel:
         new_contact = Contact(**contact.model_dump())
+        new_contact.user_id = user.id
         self.db.add(new_contact)
         await self.db.commit()
         await self.db.refresh(new_contact)
         return await self.get_contact_by_id(new_contact.id)
 
     async def update_contact(
-        self, contact_id: int, contact: ContactUpdate
+        self, contact_id: int, contact: ContactUpdate, user: User
     ) -> ContactModel | None:
-        stmt = select(Contact).where(Contact.id == contact_id)
+        stmt = select(Contact).where(
+            Contact.id == contact_id, Contact.user_id == user.id
+        )
         result = await self.db.execute(stmt)
         existing_contact = result.scalar_one_or_none()
         if existing_contact:
@@ -63,9 +71,11 @@ class ContactRepository:
         return None
 
     async def update_contact_birthdate(
-        self, contact_id: int, birthdate: ContactUpdateBirthdate
+        self, contact_id: int, birthdate: ContactUpdateBirthdate, user: User
     ) -> ContactModel | None:
-        stmt = select(Contact).where(Contact.id == contact_id)
+        stmt = select(Contact).where(
+            Contact.id == contact_id, Contact.user_id == user.id
+        )
         result = await self.db.execute(stmt)
         existing_contact = result.scalar_one_or_none()
         if existing_contact:
@@ -75,16 +85,19 @@ class ContactRepository:
             return existing_contact
         return None
 
-    async def get_birthdays_next_week(self) -> List[ContactModel]:
+    async def get_birthdays_next_week(self, user: User) -> List[ContactModel]:
         stmt = select(Contact).where(
             Contact.birthdate >= (datetime.now() + timedelta(days=1)).date(),
             Contact.birthdate <= (datetime.now() + timedelta(days=7)).date(),
+            Contact.user_id == user.id,
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def delete_contact(self, contact_id: int) -> ContactModel | None:
-        stmt = select(Contact).where(Contact.id == contact_id)
+    async def delete_contact(self, contact_id: int, user: User) -> ContactModel | None:
+        stmt = select(Contact).where(
+            Contact.id == contact_id, Contact.user_id == user.id
+        )
         result = await self.db.execute(stmt)
         existing_contact = result.scalar_one_or_none()
         if existing_contact:
