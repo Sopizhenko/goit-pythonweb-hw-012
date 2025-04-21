@@ -2,7 +2,16 @@
 Users API module for managing user-related endpoints.
 """
 
-from fastapi import APIRouter, Depends, Request, UploadFile, File, HTTPException, status, BackgroundTasks
+from fastapi import (
+    APIRouter,
+    Depends,
+    Request,
+    UploadFile,
+    File,
+    HTTPException,
+    status,
+    BackgroundTasks,
+)
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -10,12 +19,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import EmailStr
 
 from src.database.db import get_db
-from src.schemas import User, UserModel, RequestEmail, ResetPassword
+from src.schemas import User, RequestEmail, ResetPassword
 from src.conf.config import settings
-from src.services.auth import get_current_user, get_current_admin_user, create_email_token, get_email_from_token
+from src.services.auth import (
+    get_current_user,
+    get_current_admin_user,
+    create_email_token,
+    get_email_from_token,
+)
 from src.services.users import UserService
 from src.services.upload_file import UploadFileService
 from src.services.email import send_reset_password_email
+from src.services.redis_cache import cache_response, redis_cache
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -25,6 +40,7 @@ limiter = Limiter(key_func=get_remote_address)
 @router.get(
     "/me", response_model=User, description="No more than 10 requests per minute"
 )
+@cache_response(expire=300)
 @limiter.limit("10/minute")
 async def me(request: Request, user: User = Depends(get_current_user)):
     """
@@ -39,6 +55,7 @@ async def me(request: Request, user: User = Depends(get_current_user)):
 
     Note:
         This endpoint is rate-limited to 10 requests per minute.
+        Response is cached for 5 minutes.
     """
     return user
 
@@ -65,14 +82,13 @@ async def update_avatar_user(
     ).upload_file(file, user.username)
 
     user_service = UserService(db)
-    user = await user_service.update_avatar_url(user.email, avatar_url)
+    updated_user = await user_service.update_avatar_url(user.email, avatar_url)
 
-    return user
+    # Clear user's cache after avatar update
+    await redis_cache.clear_user_cache(user.id)
 
+    return updated_user
 
-@router.get("/reset-password-request")
-async def reset_password_request(
-    
 
 @router.post("/request-reset-password", status_code=status.HTTP_200_OK)
 async def request_reset_password(
@@ -107,10 +123,10 @@ async def request_reset_password(
             host=str(request.base_url),
         )
         return {"message": "Password reset email has been sent"}
-    
+
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
-        detail="User not found or email not confirmed"
+        detail="User not found or email not confirmed",
     )
 
 
@@ -138,10 +154,10 @@ async def verify_reset_token(
 
     if user and user.confirmed:
         return {"message": "Token is valid"}
-    
+
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Invalid token or user not found"
+        detail="Invalid token or user not found",
     )
 
 
@@ -168,10 +184,16 @@ async def reset_password(
     user = await user_service.get_user_by_email(email)
 
     if user and user.confirmed:
-        await user_service.change_password(email=user.email, new_password=body.new_password)
-        return {"message": f"Password has been reset successfully for user {user.username}"}
-    
+        await user_service.change_password(
+            email=user.email, new_password=body.new_password
+        )
+        # Clear user's cache after password change
+        await redis_cache.clear_user_cache(user.id)
+        return {
+            "message": f"Password has been reset successfully for user {user.username}"
+        }
+
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Invalid token or user not found"
-    ) 
+        detail="Invalid token or user not found",
+    )
