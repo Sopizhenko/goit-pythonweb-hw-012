@@ -19,6 +19,7 @@ class ContactBase(BaseModel):
         birthdate (Optional[datetime]): Birth date of the contact.
         additional_info (Optional[str]): Additional information about the contact, max length 255 characters.
     """
+
     first_name: str = Field(max_length=50)
     last_name: str = Field(max_length=50)
     email: str = Field(max_length=100)
@@ -33,6 +34,7 @@ class ContactCreate(ContactBase):
     """
     Model for creating a new contact. Inherits all fields from ContactBase.
     """
+
     pass
 
 
@@ -41,6 +43,7 @@ class ContactUpdate(ContactBase):
     Model for updating an existing contact.
     All fields are optional to allow partial updates.
     """
+
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     email: Optional[str] = None
@@ -56,6 +59,7 @@ class ContactUpdateBirthdate(BaseModel):
     Attributes:
         birthdate (datetime): The new birthdate to set.
     """
+
     birthdate: datetime
 
 
@@ -66,10 +70,10 @@ class ContactModel(ContactBase):
     Attributes:
         id (int): Unique identifier for the contact.
     """
+
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class User(BaseModel):
@@ -82,6 +86,7 @@ class User(BaseModel):
         email (str): Email address of the user.
         avatar (str): URL of the user's avatar image.
     """
+
     id: int
     username: str
     email: str
@@ -99,6 +104,7 @@ class UserCreate(BaseModel):
         email (str): Email address for the new user.
         password (str): Password for the new user.
     """
+
     username: str
     email: str
     password: str
@@ -112,6 +118,7 @@ class Token(BaseModel):
         access_token (str): The JWT access token.
         token_type (str): The type of token (e.g., "bearer").
     """
+
     access_token: str
     token_type: str
 
@@ -123,4 +130,5 @@ class RequestEmail(BaseModel):
     Attributes:
         email (EmailStr): The email address to verify.
     """
+
     email: EmailStr

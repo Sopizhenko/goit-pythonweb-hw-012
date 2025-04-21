@@ -73,7 +73,7 @@ class ContactRepository:
     ) -> ContactModel | None:
         """
         Get a contact by its ID for a specific user.
-        
+
         Args:
             contact_id (int): The ID of the contact to retrieve.
             user (User): The user for whom to retrieve the contact.
@@ -105,7 +105,7 @@ class ContactRepository:
         self.db.add(new_contact)
         await self.db.commit()
         await self.db.refresh(new_contact)
-        return await self.get_contact_by_id(new_contact.id)
+        return await self.get_contact_by_id(new_contact.id, user)
 
     async def update_contact(
         self, contact_id: int, contact: ContactUpdate, user: User

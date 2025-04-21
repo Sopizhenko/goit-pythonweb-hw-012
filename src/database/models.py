@@ -12,6 +12,7 @@ from sqlalchemy.sql.sqltypes import DateTime
 
 class Base(DeclarativeBase):
     """Base class for all database models."""
+
     pass
 
 
@@ -29,6 +30,7 @@ class Contact(Base):
         birthdate (datetime): Birth date of the contact, optional.
         additional_info (str): Additional information, max 255 characters, optional.
     """
+
     __tablename__ = "contacts"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -56,6 +58,7 @@ class User(Base):
         avatar (str): URL to user's avatar image, max 255 characters, optional.
         confirmed (bool): Email confirmation status, defaults to False.
     """
+
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
     username = Column(String, unique=True)
