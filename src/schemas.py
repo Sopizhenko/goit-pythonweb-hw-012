@@ -3,8 +3,9 @@ Pydantic models for data validation and serialization.
 """
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from src.database.models import UserRole
 
 
 class ContactBase(BaseModel):
@@ -91,6 +92,7 @@ class User(BaseModel):
     username: str
     email: str
     avatar: str
+    role: UserRole
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -103,11 +105,13 @@ class UserCreate(BaseModel):
         username (str): Desired username for the new user.
         email (str): Email address for the new user.
         password (str): Password for the new user.
+        role (UserRole, optional): User's role, defaults to USER.
     """
 
     username: str
     email: str
     password: str
+    role: UserRole = UserRole.USER
 
 
 class Token(BaseModel):

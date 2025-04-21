@@ -54,3 +54,6 @@ Thumbs.db
 
 # postgres
 postgres-data
+
+# Test data
+test.db

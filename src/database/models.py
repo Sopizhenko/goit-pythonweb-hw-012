@@ -2,9 +2,10 @@
 SQLAlchemy models for database tables.
 """
 
+from enum import Enum
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Boolean, func, Table
+from sqlalchemy import Column, Integer, String, Boolean, func, Table, Enum as SqlEnum
 from sqlalchemy.orm import relationship, mapped_column, Mapped, DeclarativeBase
 from sqlalchemy.sql.schema import ForeignKey, PrimaryKeyConstraint
 from sqlalchemy.sql.sqltypes import DateTime
@@ -45,6 +46,19 @@ class Contact(Base):
     additional_info: Mapped[str] = mapped_column(String(255), nullable=True)
 
 
+class UserRole(str, Enum):
+    """
+    Enum for user roles.
+
+    Attributes:
+        ADMIN (str): Administrator role.
+        USER (str): Regular user role.
+    """
+
+    ADMIN = "admin"
+    USER = "user"
+
+
 class User(Base):
     """
     SQLAlchemy model for users table.
@@ -67,3 +81,4 @@ class User(Base):
     created_at = Column(DateTime, default=func.now())
     avatar = Column(String(255), nullable=True)
     confirmed = Column(Boolean, default=False)
+    role = Column(SqlEnum(UserRole), default=UserRole.USER, nullable=False)

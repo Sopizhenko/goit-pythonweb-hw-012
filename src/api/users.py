@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.db import get_db
 from src.schemas import User
 from src.conf.config import settings
-from src.services.auth import get_current_user
+from src.services.auth import get_current_user, get_current_admin_user
 from src.services.users import UserService
 from src.services.upload_file import UploadFileService
 
