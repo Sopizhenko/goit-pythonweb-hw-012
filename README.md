@@ -1,8 +1,8 @@
-# 📇 Contacts API – FastAPI + SQLAlchemy + PostgreSQL
+# 📇 Contacts API – FastAPI + SQLAlchemy + PostgreSQL + Redis
 
 ## 📝 Project Overview
 
-This project is a RESTful API for storing and managing contacts. It is built using **FastAPI** and uses **SQLAlchemy** as the ORM layer to interact with a **PostgreSQL** database.
+This project is a RESTful API for storing and managing contacts. It is built using **FastAPI** and uses **SQLAlchemy** as the ORM layer to interact with a **PostgreSQL** database. The API implements **Redis** caching for improved performance.
 
 The API allows users to perform basic CRUD operations on contact records, as well as search contacts and retrieve upcoming birthdays.
 
@@ -17,6 +17,7 @@ The API allows users to perform basic CRUD operations on contact records, as wel
 - Delete a contact
 - Search contacts by first name, last name, or email
 - Retrieve contacts with birthdays in the next 7 days
+- Response caching with Redis
 - Fully documented with Swagger/OpenAPI
 
 ---
@@ -27,6 +28,7 @@ The API allows users to perform basic CRUD operations on contact records, as wel
 - **SQLAlchemy** – ORM for database interactions
 - **Pydantic** – for data validation and serialization
 - **PostgreSQL** – database engine
+- **Redis** – for response caching
 - **Uvicorn** – ASGI server for running the FastAPI app
 
 ---
