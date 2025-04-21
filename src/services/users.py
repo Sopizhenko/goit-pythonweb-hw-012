@@ -7,6 +7,7 @@ from libgravatar import Gravatar
 
 from src.repository.users import UserRepository
 from src.schemas import UserCreate
+from src.database.models import User
 
 
 class UserService:
@@ -102,3 +103,16 @@ class UserService:
             User: The updated user object.
         """
         return await self.repository.update_avatar_url(email, url)
+
+    async def change_password(self, email: str, new_password: str) -> User:
+        """
+        Change a user's password.
+
+        Args:
+            email (str): The email address of the user.
+            new_password (str): The new password to set.
+
+        Returns:
+            User: The updated user object.
+        """
+        return await self.repository.change_password(email, new_password)
