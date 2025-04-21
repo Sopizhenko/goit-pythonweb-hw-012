@@ -13,6 +13,7 @@ from src.schemas import (
     ContactCreate,
     ContactUpdate,
     ContactUpdateBirthdate,
+    User,
 )
 from src.services.contacts import ContactService
 from src.services.auth import get_current_user
@@ -35,8 +36,8 @@ async def get_contacts(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
-    user: str = Depends(get_current_user),
-) -> List[ContactModel]:
+    user: User = Depends(get_current_user),
+) -> None:
     """
     Retrieve a list of contacts with optional filtering.
 
@@ -48,7 +49,7 @@ async def get_contacts(
         skip (int, optional): Number of records to skip. Defaults to 0.
         limit (int, optional): Maximum number of records to return. Defaults to 100.
         db (AsyncSession): Database session.
-        user (str): Current authenticated user.
+        user (User): Current authenticated user.
 
     Returns:
         List[ContactModel]: List of contacts matching the criteria.
@@ -68,7 +69,7 @@ async def get_contacts(
 async def get_birthdays_next_week(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    user: str = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ) -> List[ContactModel]:
     """
     Retrieve contacts with birthdays in the next week.
@@ -76,7 +77,7 @@ async def get_birthdays_next_week(
     Args:
         request (Request): The incoming request object.
         db (AsyncSession): Database session.
-        user (str): Current authenticated user.
+        user (User): Current authenticated user.
 
     Returns:
         List[ContactModel]: List of contacts with birthdays in the next week.
@@ -94,7 +95,7 @@ async def get_contact_by_id(
     request: Request,
     contact_id: int,
     db: AsyncSession = Depends(get_db),
-    user: str = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ) -> ContactModel:
     """
     Retrieve a specific contact by ID.
@@ -103,7 +104,7 @@ async def get_contact_by_id(
         request (Request): The incoming request object.
         contact_id (int): The ID of the contact to retrieve.
         db (AsyncSession): Database session.
-        user (str): Current authenticated user.
+        user (User): Current authenticated user.
 
     Returns:
         ContactModel: The requested contact.
@@ -129,7 +130,7 @@ async def get_contact_by_id(
 async def create_contact(
     contact: ContactCreate,
     db: AsyncSession = Depends(get_db),
-    user: str = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ) -> ContactModel:
     """
     Create a new contact.
@@ -137,7 +138,7 @@ async def create_contact(
     Args:
         contact (ContactCreate): The contact data to create.
         db (AsyncSession): Database session.
-        user (str): Current authenticated user.
+        user (User): Current authenticated user.
 
     Returns:
         ContactModel: The created contact.
@@ -154,7 +155,7 @@ async def update_contact(
     contact_id: int,
     contact: ContactUpdate,
     db: AsyncSession = Depends(get_db),
-    user: str = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ) -> ContactModel:
     """
     Update an existing contact.
@@ -163,7 +164,7 @@ async def update_contact(
         contact_id (int): The ID of the contact to update.
         contact (ContactUpdate): The updated contact data.
         db (AsyncSession): Database session.
-        user (str): Current authenticated user.
+        user (User): Current authenticated user.
 
     Returns:
         ContactModel: The updated contact.
@@ -185,7 +186,7 @@ async def update_contact_birthdate(
     contact_id: int,
     birthdate: ContactUpdateBirthdate,
     db: AsyncSession = Depends(get_db),
-    user: str = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ) -> ContactModel:
     """
     Update the birthdate of an existing contact.
@@ -194,7 +195,7 @@ async def update_contact_birthdate(
         contact_id (int): The ID of the contact to update.
         birthdate (ContactUpdateBirthdate): The new birthdate data.
         db (AsyncSession): Database session.
-        user (str): Current authenticated user.
+        user (User): Current authenticated user.
 
     Returns:
         ContactModel: The updated contact.
@@ -217,7 +218,7 @@ async def update_contact_birthdate(
 async def delete_contact(
     contact_id: int,
     db: AsyncSession = Depends(get_db),
-    user: str = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ) -> ContactModel:
     """
     Delete a contact.
@@ -225,7 +226,7 @@ async def delete_contact(
     Args:
         contact_id (int): The ID of the contact to delete.
         db (AsyncSession): Database session.
-        user (str): Current authenticated user.
+        user (User): Current authenticated user.
 
     Returns:
         ContactModel: The deleted contact.

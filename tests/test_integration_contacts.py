@@ -50,7 +50,8 @@ async def test_get_contacts(client, get_token, test_contact_data):
 
     # Then get all contacts
     response = client.get(
-        "/api/contacts/", headers={"Authorization": f"Bearer {get_token}"}
+        "/api/contacts/",
+        headers={"Authorization": f"Bearer {get_token}"},
     )
     assert response.status_code == 200
     data = response.json()

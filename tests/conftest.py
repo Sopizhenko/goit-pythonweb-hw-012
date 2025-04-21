@@ -1,15 +1,18 @@
 import asyncio
+import pickle
 
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from unittest.mock import patch, AsyncMock
 
 from main import app
 from src.database.models import Base, User, UserRole
 from src.database.db import get_db
 from src.services.auth import create_access_token, Hash
+
 
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
@@ -35,8 +38,110 @@ test_admin_user = User(
     email="admin@example.com",
     avatar="https://twitter.com/gravatar",
     role=UserRole.ADMIN,
-    confirmed=True
+    confirmed=True,
 )
+
+
+class MockRedis:
+    """Mock Redis client for testing."""
+    def __init__(self, *args, **kwargs):
+        self._cache = {}
+        self.decode_responses = kwargs.get('decode_responses', True)
+
+    async def get(self, key):
+        value = self._cache.get(key)
+        if value is None:
+            return None
+        if self.decode_responses:
+            return value
+        return pickle.dumps(value)  # Return pickled data as the real Redis would
+
+    async def set(self, key, value, ex=None):
+        if not self.decode_responses:
+            try:
+                # If the value is already pickled, unpickle it first
+                value = pickle.loads(value)
+            except (pickle.UnpicklingError, TypeError):
+                # If it's not pickled data, use as is
+                pass
+        self._cache[key] = value
+        return True
+
+    async def delete(self, *keys):
+        count = 0
+        for key in keys:
+            if key in self._cache:
+                del self._cache[key]
+                count += 1
+        return count
+
+    async def keys(self, pattern):
+        # Simple pattern matching for testing
+        import fnmatch
+        return [key for key in self._cache.keys() if fnmatch.fnmatch(key, pattern)]
+
+    async def incr(self, key):
+        value = int(self._cache.get(key, 0)) + 1
+        self._cache[key] = str(value)
+        return value
+
+    async def expire(self, key, time):
+        return True
+
+
+class MockRedisCache:
+    """Mock Redis cache service for testing."""
+    def __init__(self):
+        self.redis_client = MockRedis(decode_responses=False)
+
+    async def get(self, key):
+        data = await self.redis_client.get(key)
+        if data is not None:
+            try:
+                return pickle.loads(data)
+            except (pickle.UnpicklingError, TypeError):
+                return data
+        return None
+
+    async def set(self, key, value, expire=None):
+        await self.redis_client.set(key, value, ex=expire)
+
+    async def delete(self, key):
+        await self.redis_client.delete(key)
+
+    async def clear_pattern(self, pattern):
+        keys = await self.redis_client.keys(pattern)
+        if keys:
+            await self.redis_client.delete(*keys)
+
+    async def clear_user_cache(self, user_id):
+        await self.clear_pattern(f"user:{user_id}:*")
+
+
+def no_cache_response(expire: int = None):
+    """Decorator that replaces Redis cache with pass-through for testing."""
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            return await func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+mock_redis_cache = MockRedisCache()
+
+
+@pytest.fixture(autouse=True)
+def disable_redis_cache():
+    """Disable Redis caching for tests."""
+    with patch("redis.asyncio.Redis", return_value=MockRedis()):
+        with patch("src.services.redis_cache.redis_cache", mock_redis_cache):
+            with patch("src.services.redis_cache.cache_response", no_cache_response):
+                with patch("src.api.contacts.cache_response", no_cache_response):
+                    with patch("src.api.users.cache_response", no_cache_response):
+                        with patch("src.api.contacts.redis_cache", mock_redis_cache):
+                            with patch("src.api.users.redis_cache", mock_redis_cache):
+                                yield
+
 
 @pytest.fixture(scope="module", autouse=True)
 def init_models_wrap():
@@ -62,7 +167,6 @@ def init_models_wrap():
 @pytest.fixture(scope="module")
 def client():
     # Dependency override
-
     async def override_get_db():
         async with TestingSessionLocal() as session:
             try:

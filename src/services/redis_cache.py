@@ -6,6 +6,7 @@ import pickle
 from typing import Any, Optional
 import redis.asyncio as redis
 from fastapi import Request, Response
+from functools import wraps
 
 from src.conf.config import settings
 
@@ -90,14 +91,8 @@ def cache_response(expire: int = None):
     """
 
     def decorator(func):
-        async def wrapper(*args, **kwargs):
-            # Get request object from args or kwargs
-            request = next(
-                (arg for arg in args if isinstance(arg, Request)), kwargs.get("request")
-            )
-            if not request:
-                return await func(*args, **kwargs)
-
+        @wraps(func)  # Preserve the original function metadata
+        async def wrapper(request: Request, *args, **kwargs):
             # Get current user if authenticated
             user = getattr(request.state, "user", None)
             user_id = getattr(user, "id", "anonymous")
@@ -113,7 +108,7 @@ def cache_response(expire: int = None):
                 return cached_data
 
             # Get fresh response
-            response = await func(*args, **kwargs)
+            response = await func(request, *args, **kwargs)
 
             # Cache the response
             await redis_cache.set(cache_key, response, expire)
