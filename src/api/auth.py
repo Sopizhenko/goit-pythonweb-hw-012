@@ -1,3 +1,7 @@
+"""
+Authentication API module for managing user authentication and authorization endpoints.
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
@@ -18,6 +22,21 @@ async def register_user(
     request: Request,
     db: Session = Depends(get_db),
 ):
+    """
+    Register a new user.
+
+    Args:
+        user_data (UserCreate): The user registration data.
+        background_tasks (BackgroundTasks): FastAPI background tasks handler.
+        request (Request): The incoming request object.
+        db (Session): Database session.
+
+    Returns:
+        User: The newly created user.
+
+    Raises:
+        HTTPException: If a user with the same email or username already exists.
+    """
     user_service = UserService(db)
 
     email_user = await user_service.get_user_by_email(user_data.email)
@@ -45,6 +64,19 @@ async def register_user(
 async def login_user(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
+    """
+    Authenticate a user and return an access token.
+
+    Args:
+        form_data (OAuth2PasswordRequestForm): The login credentials.
+        db (Session): Database session.
+
+    Returns:
+        Token: The access token for the authenticated user.
+
+    Raises:
+        HTTPException: If the credentials are invalid or email is not confirmed.
+    """
     user_service = UserService(db)
     user = await user_service.get_user_by_username(form_data.username)
     if not user or not Hash().verify_password(form_data.password, user.hashed_password):
@@ -64,6 +96,19 @@ async def login_user(
 
 @router.get("/confirmed_email/{token}")
 async def confirmed_email(token: str, db: Session = Depends(get_db)):
+    """
+    Confirm a user's email address using a verification token.
+
+    Args:
+        token (str): The email verification token.
+        db (Session): Database session.
+
+    Returns:
+        dict: A message indicating the confirmation status.
+
+    Raises:
+        HTTPException: If the token is invalid or verification fails.
+    """
     email = await get_email_from_token(token)
     user_service = UserService(db)
     user = await user_service.get_user_by_email(email)
@@ -84,6 +129,18 @@ async def request_email(
     request: Request,
     db: Session = Depends(get_db),
 ):
+    """
+    Request a new email verification link.
+
+    Args:
+        body (RequestEmail): The email request data.
+        background_tasks (BackgroundTasks): FastAPI background tasks handler.
+        request (Request): The incoming request object.
+        db (Session): Database session.
+
+    Returns:
+        dict: A message indicating the request status.
+    """
     user_service = UserService(db)
     user = await user_service.get_user_by_email(body.email)
 

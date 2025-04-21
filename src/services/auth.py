@@ -1,3 +1,7 @@
+"""
+Authentication service module for handling user authentication and authorization.
+"""
+
 from datetime import datetime, timedelta, UTC
 from typing import Optional
 
@@ -13,12 +17,35 @@ from src.services.users import UserService
 
 
 class Hash:
+    """
+    Class for handling password hashing and verification.
+    """
+
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     def verify_password(self, plain_password, hashed_password):
+        """
+        Verify a plain password against a hashed password.
+
+        Args:
+            plain_password (str): The plain text password to verify.
+            hashed_password (str): The hashed password to verify against.
+
+        Returns:
+            bool: True if the password matches, False otherwise.
+        """
         return self.pwd_context.verify(plain_password, hashed_password)
 
     def get_password_hash(self, password: str):
+        """
+        Hash a password.
+
+        Args:
+            password (str): The password to hash.
+
+        Returns:
+            str: The hashed password.
+        """
         return self.pwd_context.hash(password)
 
 
@@ -26,6 +53,16 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 async def create_access_token(data: dict, expires_delta: Optional[int] = None):
+    """
+    Create a new JWT access token.
+
+    Args:
+        data (dict): The data to encode in the token.
+        expires_delta (Optional[int], optional): Token expiration time in seconds.
+
+    Returns:
+        str: The encoded JWT token.
+    """
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(UTC) + timedelta(seconds=expires_delta)
@@ -41,6 +78,19 @@ async def create_access_token(data: dict, expires_delta: Optional[int] = None):
 async def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ):
+    """
+    Get the current authenticated user from a JWT token.
+
+    Args:
+        token (str): The JWT token from the request.
+        db (Session): The database session.
+
+    Returns:
+        User: The authenticated user.
+
+    Raises:
+        HTTPException: If the token is invalid or the user is not found.
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -65,6 +115,15 @@ async def get_current_user(
 
 
 def create_email_token(data: dict):
+    """
+    Create a token for email verification.
+
+    Args:
+        data (dict): The data to encode in the token.
+
+    Returns:
+        str: The encoded email verification token.
+    """
     to_encode = data.copy()
     expire = datetime.now(UTC) + timedelta(days=7)
     to_encode.update({"iat": datetime.now(UTC), "exp": expire})
@@ -73,6 +132,18 @@ def create_email_token(data: dict):
 
 
 async def get_email_from_token(token: str):
+    """
+    Extract the email address from an email verification token.
+
+    Args:
+        token (str): The email verification token.
+
+    Returns:
+        str: The email address from the token.
+
+    Raises:
+        HTTPException: If the token is invalid.
+    """
     try:
         payload = jwt.decode(
             token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]

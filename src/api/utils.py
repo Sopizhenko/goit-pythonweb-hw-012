@@ -1,3 +1,7 @@
+"""
+Utility API module for system health checks and other utility endpoints.
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
@@ -9,8 +13,20 @@ router = APIRouter(tags=["utils"])
 
 @router.get("/healthchecker")
 async def healthchecker(db: AsyncSession = Depends(get_db)):
+    """
+    Check the health of the API and database connection.
+
+    Args:
+        db (AsyncSession): Database session.
+
+    Returns:
+        dict: A welcome message if the health check passes.
+
+    Raises:
+        HTTPException: If the database connection fails or is not configured correctly.
+    """
     try:
-        # Виконуємо асинхронний запит
+        # Execute async query
         result = await db.execute(text("SELECT 1"))
         result = result.scalar_one_or_none()
 
