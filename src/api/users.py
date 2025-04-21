@@ -40,7 +40,6 @@ limiter = Limiter(key_func=get_remote_address)
 @router.get(
     "/me", response_model=User, description="No more than 10 requests per minute"
 )
-@cache_response(expire=300)
 @limiter.limit("10/minute")
 async def me(request: Request, user: User = Depends(get_current_user)):
     """
